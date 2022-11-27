@@ -35,7 +35,7 @@ SIDIT Protocol es un programa de codigo abierto y lo puedes ubicar en el siguien
 
 ## Instalacion
 
-SIDIT Protocol requiere [Node.js](https://nodejs.org/) v10+ para correrr.
+SIDIT Protocol requiere [Node.js](https://nodejs.org/) v10+ para correr.
 
 Instala las dependencias y devDependencies para comenzar el servidor.
 
