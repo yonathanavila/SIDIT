@@ -1,25 +1,22 @@
 import '../styles/globals.css'
-import '../layouts/InternalLayout'
-import type { AppProps } from 'next/app'
-import InternalLayout from '../layouts/InternalLayout'
-import { magic } from '../lib/magic'
-import { UserContext } from '../lib/UserContext'
+import { useState, useEffect } from 'react';
+import { UserContext } from '../lib/UserContext';
+import Router from 'next/router';
+import { magic } from '../lib/magic';
+import InternalLayout from '../layouts/InternalLayout';
 import { ThemeProvider } from '@magiclabs/ui';
 import '@magiclabs/ui/dist/cjs/index.css';
-import { useEffect, useState } from 'react';
-import Router from 'next/router'
 
-export default function App({ Component, pageProps }: AppProps) {
-
-  const [user, setUser] = useState<any>(null);
+function MyApp({ Component, pageProps }) {
+  const [user, setUser] = useState();
 
   // If isLoggedIn is true, set the UserContext with user data
   // Otherwise, redirect to /login and set UserContext to { user: null }
   useEffect(() => {
     setUser({ loading: true });
-    magic.user.isLoggedIn().then((isLoggedIn: any) => {
+    magic.user.isLoggedIn().then((isLoggedIn) => {
       if (isLoggedIn) {
-        magic.user.getMetadata().then((userData: any) => setUser(userData));
+        magic.user.getMetadata().then((userData) => setUser(userData));
       } else {
         Router.push('/login');
         setUser({ user: null });
@@ -35,5 +32,7 @@ export default function App({ Component, pageProps }: AppProps) {
         </InternalLayout>
       </UserContext.Provider>
     </ThemeProvider>
-  )
+  );
 }
+
+export default MyApp;
