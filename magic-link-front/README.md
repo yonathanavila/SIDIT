@@ -1,84 +1,209 @@
-# SIDIT Protocol
-## _Herramienta de Digitalizacion y Transparencia_
+# Demo
 
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
+Live at https://magic-nextjs.vercel.app/login
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://github.com/yonathanavila/SIDIT/tree/main/blockchain)
+# Quick Start Instructions
 
-SIDIT Protocol es una herramienta digital, transparente y descentralizada, que busca automatizar y hacer mas eficiente la reporteria del sistema de emergencias de Honduras.
-
-- Abre la aplicacion
-- Llena los formularios
-- Saca reportes
-- ✨Magia ✨
-
-## Caracteristicas
-
-- Llenar reportes de manera mas eficiente para poder optimizar tiempo en llamados de emergencia.
-- Almacenamiento de los reportes en el blockchain para seguridad y transparencia.
-- Exporta reportes facilmente referenciando a los datos guardados en la blockchain.
-- Acceso rapido desde cualquier dispositivo con acceso a internet.
-
-## Tech
-
-SIDIT Protocol utiliza una variedad de distintos proyectos para poder funcionar correctamente:
-
-- [Next.JS] - Creacion de SPA para interaccion con SmartContracts
-- [Remix IDE] - Despliegue y pruebas de SmartContracts
-- [Solidity] - Lenguaje para creacion de SmartContracts
-- [Tailwind] - Creacion de componentes de interfaz de usuario
-- [MagicLink] - Interfaz y conexion de billetera "USER-FRIENDLY"
-- [Arbitrum] - L2 optimo para transacciones a bajo costo
-
-SIDIT Protocol es un programa de codigo abierto y lo puedes ubicar en el siguiente [repositorio publico][dill]
- en GitHub.
-
-## Instalacion
-
-SIDIT Protocol requiere [Node.js](https://nodejs.org/) v10+ para correrr.
-
-Instala las dependencias y devDependencies para comenzar el servidor.
-
-```sh
-cd SIDIT
-npm i
-npm run dev
+```
+$ git clone https://github.com/magiclabs/example-nextjs
+$ cd example-nextjs
+$ mv .env.local.example .env.local // enter your Magic API keys in your env variables
+$ yarn install
+$ yarn dev // starts app in http://localhost:3000
 ```
 
-Para ambientes de produccion...
+## Environment Variables
 
-```sh
-npm run build 
-NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY=
-MAGIC_SECRET_KEY=
+```
+NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY=pk_live_123...
+MAGIC_SECRET_KEY=sk_live_123...
 ```
 
-## License
+# Introduction
 
-[SmartContract Deployment]
+Magic is a passwordless authentication sdk that lets you plug and play different auth methods into your app. Magic supports passwordless email login via magic links, social login (such as Login with Google), and WebAuthn (a protocol that lets users authenticate a hardware device using either a YubiKey or fingerprint). This app will walk through implementing magic link and social logins.
 
-**Contribuyendo con Honduras! #weMerge**
+## File Structure
 
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
+```txt
+├── README.md
+├── components
+│   ├── email-form.js
+│   ├── header.js
+│   ├── layout.js
+│   ├── loading.js
+│   └── social-logins.js
+├── lib
+│   ├── UserContext.js
+│   └── magic.js
+├── package.json
+├── pages
+│   ├── _app.js
+│   ├── _document.js
+│   ├── api
+│   │   └── login.js
+│   ├── callback.js
+│   ├── index.js
+│   ├── login.js
+│   └── profile.js
+├── public
+│   └── (images)
+└── yarn.lock
+```
 
-   [dill]: <https://github.com/yonathanavila/SIDIT/tree/main/blockchain>
-   [git-repo-url]: <https://github.com/joemccann/dillinger.git>
-   [john gruber]: <http://daringfireball.net>
-   [df1]: <http://daringfireball.net/projects/markdown/>
-   [markdown-it]: <https://github.com/markdown-it/markdown-it>
-   [Ace Editor]: <http://ace.ajax.org>
-   [node.js]: <http://nodejs.org>
-   [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>
-   [jQuery]: <http://jquery.com>
-   [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
-   [express]: <http://expressjs.com>
-   [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
-   [SmartContract Deployment]: <https://goerli-rollup-explorer.arbitrum.io/address/0x8a1cfac91F05e37C42Ac70053Fa8eB602Fc60691>
+## Magic Setup
 
-   [PlDb]: <https://github.com/joemccann/dillinger/tree/master/plugins/dropbox/README.md>
-   [PlGh]: <https://github.com/joemccann/dillinger/tree/master/plugins/github/README.md>
-   [PlGd]: <https://github.com/joemccann/dillinger/tree/master/plugins/googledrive/README.md>
-   [PlOd]: <https://github.com/joemccann/dillinger/tree/master/plugins/onedrive/README.md>
-   [PlMe]: <https://github.com/joemccann/dillinger/tree/master/plugins/medium/README.md>
-   [PlGa]: <https://github.com/RahulHP/dillinger/blob/master/plugins/googleanalytics/README.md>
+Your Magic setup will depend on what login options you want. For magic links, minimal setup is required. For social logins, follow our [**documentation**](https://docs.magic.link/social-login) for configuration instructions.
+
+Once you have social logins configured (if applicable), grab your API keys from Magic’s dashboard and in `.env.local` enter your Test Publishable Key such as `NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY=pk_test_1234567890` and your Test Secret Key such as `MAGIC_SECRET_KEY=sk_test_1234567890`.
+
+# Client
+
+## Keeping Track of the User
+
+This example app will keep track of the logged in user by using React's `useContext` hook. Inside `_app.js`, wrap the entire app in the `<UserContext.Provider>` so all child components down the component tree have access to see if the user is logged in or not (`UserContext` is exported from `lib/UserContext`). Once a user logs in with Magic, unless they log out, they'll remian logged in for 7 days until their session expires.
+
+```js
+// If isLoggedIn is true, set the UserContext with user data
+// Otherwise, redirect to /login and set UserContext to { user: null }
+useEffect(() => {
+  setUser({ loading: true });
+  magic.user.isLoggedIn().then((isLoggedIn) => {
+    if (isLoggedIn) {
+      magic.user.getMetadata().then((userData) => setUser(userData));
+    } else {
+      Router.push('/login');
+      setUser({ user: null });
+    }
+  });
+}, []);
+
+return (
+  <UserContext.Provider value={[user, setUser]}>
+    <Layout>
+      <Component {...pageProps} />
+    </Layout>
+  </UserContext.Provider>
+);
+```
+
+## Magic Link Auth
+
+In `pages/login.js`, handle `magic.auth.loginWithMagicLink()` which is what triggers the magic link to be emailed to the user. It takes an object with two parameters, `email` and an optional `redirectURI`. Magic allows you to configure the email link to open up a new tab, bringing the user back to your application. With the redirect in place, a user will get logged in on both the original and new tab. Once the user clicks the email link, send the `didToken` to the server endpoint at `/api/login` to validate it, and if the token is valid, set the `UserContext` and redirect to the profile page.
+
+```js
+async function handleLoginWithEmail(email) {
+  // Trigger Magic link to be sent to user
+  let didToken = await magic.auth.loginWithMagicLink({
+    email,
+    redirectURI: new URL('/callback', window.location.origin).href, // optional redirect back to your app after magic link is clicked
+  });
+
+  // Validate didToken with server
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + didToken,
+    },
+  });
+
+  if (res.status === 200) {
+    // Set the UserContext to the now logged in user
+    let userMetadata = await magic.user.getMetadata();
+    await setUser(userMetadata);
+    Router.push('/profile');
+  }
+}
+```
+
+## Social Logins
+
+The social login implementation is similar. `magic.oauth.loginWithRedirect()` takes an object with a `provider`, and a required `redirectURI` for where to redirect back to once the user authenticates with the social provider and with Magic. In this case, the user will get redirected to `http://localhost:3000/callback`.
+
+```js
+function handleLoginWithSocial(provider) {
+  magic.oauth.loginWithRedirect({
+    provider, // google, apple, etc
+    redirectURI: new URL('/callback', window.location.origin).href, // required redirect to finish social login
+  });
+}
+```
+
+## Handling Redirect
+
+In the `/callback` page, check if the query parameters include a `provider`, and if so, finish the social login, otherwise, it’s a user completing the email login.
+
+```js
+// The redirect contains a `provider` query param if the user is logging in with a social provider
+useEffect(() => {
+  router.query.provider ? finishSocialLogin() : finishEmailRedirectLogin();
+}, [router.query]);
+
+// `getRedirectResult()` returns an object with user data from Magic and the social provider
+const finishSocialLogin = async () => {
+  let result = await magic.oauth.getRedirectResult();
+  authenticateWithServer(result.magic.idToken);
+};
+
+// `loginWithCredential()` returns a didToken for the user logging in
+const finishEmailRedirectLogin = () => {
+  if (router.query.magic_credential)
+    magic.auth.loginWithCredential().then((didToken) => authenticateWithServer(didToken));
+};
+
+// Send token to server to validate
+const authenticateWithServer = async (didToken) => {
+  let res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + didToken,
+    },
+  });
+
+  if (res.status === 200) {
+    // Set the UserContext to the now logged in user
+    let userMetadata = await magic.user.getMetadata();
+    await setUser(userMetadata);
+    Router.push('/profile');
+  }
+};
+```
+
+## Logout
+
+Users also need to be able to log out. In `header.js`, add a `logout` function to end the user's session with Magic, clear the user from the UserContext, and redirect back to the login page.
+
+```js
+const logout = () => {
+  magic.user.logout().then(() => {
+    setUser({ user: null });
+    Router.push('/login');
+  });
+};
+```
+
+# Server
+
+## Validating the Auth Token (didToken)
+
+In the `/api/login` route, simply verify the `DID token`, then send a `200` back to the client.
+
+```js
+export default async function login(req, res) {
+  try {
+    const didToken = req.headers.authorization.substr(7);
+    await magic.token.validate(didToken);
+    res.status(200).json({ authenticated: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+That's it! You now have a working Next.js app that includes Magic authentication for both magic links and social logins.
+
+## Deploying to Vercel
+
+Follow [this guide](https://magic.link/posts/magic-link-nextjs) for deploying to Vercel
